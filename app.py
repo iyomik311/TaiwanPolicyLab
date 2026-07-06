@@ -5,6 +5,10 @@ from game import TaiwanGame
 from simulator import TaiwanSimulator
 from nash import calculate_nash, format_equilibria
 from charts import plot_average_scores, plot_total_scores
+from risk import calculate_risk, risk_level
+from silicon import calculate_shield, shield_level
+from economy import calculate_cost, cost_level
+from analysis import generate_analysis
 
 
 st.set_page_config(
@@ -46,7 +50,26 @@ taiwan_position = st.sidebar.slider(
     10,
     5
 )
+semiconductor = st.sidebar.slider(
+    "Semiconductor Dependence",
+    0,
+    100,
+    70
+)
 
+economic = st.sidebar.slider(
+    "Economic Interdependence",
+    0,
+    100,
+    60
+)
+
+sanctions = st.sidebar.slider(
+    "International Sanctions",
+    0,
+    100,
+    40
+)
 if st.button("Run Simulation"):
 
     game = TaiwanGame(
@@ -80,7 +103,26 @@ if st.button("Run Simulation"):
     )
 
     results = simulator.run(100)
+risk = calculate_risk(
+    us_support,
+    china_pressure,
+    taiwan_position,
+    semiconductor,
+    economic,
+    sanctions
+)
 
+shield = calculate_shield(
+    semiconductor,
+    economic,
+    sanctions
+)
+
+economic_cost = calculate_cost(
+    risk,
+    semiconductor,
+    economic
+)
     st.subheader("Simulation Results")
 
     col1, col2 = st.columns(2)
@@ -100,9 +142,41 @@ if st.button("Run Simulation"):
     st.pyplot(plot_average_scores(results))
 
     st.pyplot(plot_total_scores(results))
+st.subheader("Policy Indicators")
 
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric(
+        "Escalation Risk",
+        f"{risk}/100"
+    )
+    st.caption(risk_level(risk))
+
+with col2:
+    st.metric(
+        "Silicon Shield",
+        f"{shield}/100"
+    )
+    st.caption(shield_level(shield))
+
+with col3:
+    st.metric(
+        "Economic Cost",
+        f"{economic_cost}%"
+    )
+    st.caption(cost_level(economic_cost))
     st.subheader("Simulation History")
 
     st.dataframe(
         pd.DataFrame(results["History"])
     )
+st.subheader("AI Policy Analysis")
+
+st.info(
+    generate_analysis(
+        risk,
+        shield,
+        economic_cost
+    )
+)
